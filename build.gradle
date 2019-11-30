@@ -1,0 +1,102 @@
+group 'code-processor'
+version '1.0-SNAPSHOT'
+
+/**
+ * 1. ./gradlew rmDup
+ * 2. ./exec_processor Package
+ *
+ */
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'fr.inria.gforge.spoon',
+                name: 'spoon-gradle-plugin',
+                version:'1.3'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+//apply plugin: 'spoon'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile('org.seleniumhq.selenium:selenium-java:2.53.1')
+    compile('org.seleniumhq.selenium:selenium-firefox-driver:2.53.1')
+    compile group: 'org.mdkt.compiler',
+            name: 'InMemoryJavaCompiler',
+            version:'1.3.0'
+    compile group: 'fr.inria.gforge.spoon',
+            name: 'spoon-core',
+            version:'7.0.0'
+    compile group: 'commons-io',
+            name: 'commons-io',
+            version:'2.4'
+    compile group: 'commons-lang',
+            name: 'commons-lang',
+            version:'2.3'
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+//task copyJars(type: Copy) {
+//    from configurations.compile
+//    into 'lib' // 目标位置
+//}
+
+jar {
+    String someString = ''
+    configurations.runtime.each {
+        someString = someString + " lib/" + it.name
+//        println someString
+    }
+    manifest {
+        attributes 'Main-Class': 'zy.TestProcessor'
+        attributes 'Class-Path': someString
+        attributes("Implementation-Title": "spoon",
+                "Implementation-Version": "1")
+    }
+    exclude(['zy/TestProcessor*'])
+}
+
+task clearJar(type: Delete) {
+    delete 'build/libs/lib'
+}
+
+task copyJar(type: Copy) {
+    from configurations.runtime
+    into('build/libs/lib')
+    println("copyJar in configuration time=======")
+}
+
+task clearPj(type:Delete){
+    delete 'build','target'
+    println("clearPj in configuration time========")
+}
+
+task release(type: Copy,dependsOn: [build,copyJar]) {
+}
+
+task copyProccessor(type: Copy) {
+    from 'build/classes/main/zy/'
+    into 'zy/'
+    include '*Processor.class'
+
+}
+
+task rmDup(dependsOn: [release, copyProccessor]) {
+    doFirst{
+        println "after release"
+        println "move *processor to zy"
+
+        delete 'build/generated-sources'
+        delete 'build/classes'
+        delete 'spooned'
+    }
+}

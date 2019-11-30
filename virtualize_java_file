@@ -1,0 +1,1 @@
+java -cp lib/spoon-core-6.2.0-jar-with-dependencies.jar spoon.Launcher -i src/main/java/zy/TestProcessor.java --gui --noclasspath
